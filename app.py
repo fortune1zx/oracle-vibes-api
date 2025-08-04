@@ -41,7 +41,7 @@ def astrology():
         # Person nesnesinin yapısını logla
         logger.debug(f"Person sun: {person.sun}")
         logger.debug(f"Person moon: {person.moon}")
-        logger.debug(f"Person ascendant: {person.ascendant}")
+        logger.debug(f"Person first_house: {person.first_house}")
         logger.debug(f"Person mercury: {person.mercury}")
         logger.debug(f"Person venus: {person.venus}")
         logger.debug(f"Person mars: {person.mars}")
@@ -49,7 +49,7 @@ def astrology():
         response = {
             "sun_sign": f"{person.sun['sign']} {person.sun.get('position', 0)}° - Your identity shines in the Matrix",
             "moon_sign": f"{person.moon['sign']} - Your emotions dance with cosmic waves",
-            "ascendant": f"{person.ascendant['sign']} - Your cosmic mask",
+            "ascendant": f"{person.first_house['sign']} - Your cosmic mask",
             "planets": {
                 "mercury": f"{person.mercury['sign']} {person.mercury.get('position', 0)}°",
                 "venus": f"{person.venus['sign']} {person.venus.get('position', 0)}°",
