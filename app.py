@@ -14,12 +14,12 @@ def astrology():
         month = data.get('month')
         day = data.get('day')
         hours = data.get('hour')  # kerykeion 'hours' bekliyor
-        minutes = data.get('minute')  # kerykeion 'minutes' bekliyor
+        minuts = data.get('minute')  # kerykeion 'minuts' bekliyor
         lat = data.get('lat')
         lng = data.get('lng')
         city = data.get('city', 'Unknown')  # Varsayılan şehir adı
 
-        if not all([year, month, day, hours, minutes, lat, lng]):
+        if not all([year, month, day, hours, minuts, lat, lng]):
             return jsonify({"error": "Missing required fields"}), 400
 
         person = KrInstance(
@@ -28,7 +28,7 @@ def astrology():
             month=month,
             day=day,
             hours=hours,
-            minutes=minutes,
+            minuts=minuts,
             lat=lat,
             lng=lng,
             tz_str="UTC"  # Saat dilimi sorununu çözmek için
