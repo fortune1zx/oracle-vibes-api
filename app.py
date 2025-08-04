@@ -34,13 +34,13 @@ def astrology():
             tz_str="UTC"  # Saat dilimi sorununu çözmek için
         )
         response = {
-            "sun_sign": f"{person.sun['sign']} {person.sun['degree']}° - Your identity shines in the Matrix",
+            "sun_sign": f"{person.sun['sign']} {person.sun['deg']}° - Your identity shines in the Matrix",
             "moon_sign": f"{person.moon['sign']} - Your emotions dance with cosmic waves",
             "ascendant": f"{person.ascendant['sign']} - Your cosmic mask",
             "planets": {
-                "mercury": f"{person.mercury['sign']} {person.mercury['degree']}°",
-                "venus": f"{person.venus['sign']} {person.venus['degree']}°",
-                "mars": f"{person.mars['sign']} {person.mars['degree']}°"
+                "mercury": f"{person.mercury['sign']} {person.mercury['deg']}°",
+                "venus": f"{person.venus['sign']} {person.venus['deg']}°",
+                "mars": f"{person.mars['sign']} {person.mars['deg']}°"
             }
         }
         return jsonify(response), 200
