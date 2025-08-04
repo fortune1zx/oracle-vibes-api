@@ -17,11 +17,22 @@ def astrology():
         minute = data.get('minute')
         lat = data.get('lat')
         lng = data.get('lng')
+        city = data.get('city', 'Unknown')  # Varsayılan şehir adı
 
         if not all([year, month, day, hour, minute, lat, lng]):
             return jsonify({"error": "Missing required fields"}), 400
 
-        person = KrInstance("Person", year, month, day, hour, minute, lat=lat, lng=lng)
+        person = KrInstance(
+            name=city,
+            year=year,
+            month=month,
+            day=day,
+            hour=hour,
+            minute=minute,
+            lat=lat,
+            lng=lng,
+            tz_str="UTC"  # Saat dilimi sorununu çözmek için
+        )
         response = {
             "sun_sign": f"{person.sun['sign']} {person.sun['degree']}° - Your identity shines in the Matrix",
             "moon_sign": f"{person.moon['sign']} - Your emotions dance with cosmic waves",
