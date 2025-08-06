@@ -47,16 +47,20 @@ def astrology():
         if not all([year, month, day, hours, minuts, lat, lon]):
             return jsonify({"error": "Missing required fields"}), 400
 
+        # KrInstance'ı Chiron ve diğer noktalar etkinleştirilmiş şekilde başlat
         person = KrInstance(
             name=city,
             year=year,
             month=month,
             day=day,
-            hours=hours,
-            minuts=minuts,
+            hour=hours,
+            minute=minuts,
             lat=lat,
-            lon=lon,
-            tz_str="UTC"
+            lng=lon,
+            tz_str="UTC",
+            disable_chiron=False,  # Chiron'u etkinleştir
+            disable_lilith=False,  # Lilith'i etkinleştir
+            disable_nodes=False    # Lunar Nodes'u etkinleştir
         )
 
         # Loglama
