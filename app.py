@@ -1,16 +1,14 @@
 from flask import Flask, request, jsonify
-from kerykeion import KerykeionChart
+from kerykeion import KerykeionChartSVG
 import logging
 from datetime import datetime, timedelta
 import ephem
 
 app = Flask(__name__)
 
-# Loglama ayarları
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Element dağılımı için burçlar
 ELEMENTS = {
     'Ari': 'Fire', 'Leo': 'Fire', 'Sag': 'Fire',
     'Tau': 'Earth', 'Vir': 'Earth', 'Cap': 'Earth',
@@ -18,7 +16,6 @@ ELEMENTS = {
     'Can': 'Water', 'Sco': 'Water', 'Pis': 'Water'
 }
 
-# Basit transit hesaplaması için
 def get_transits(year, month, day):
     observer = ephem.Observer()
     observer.date = f"{year}/{month}/{day}"
@@ -47,8 +44,7 @@ def astrology():
         if not all([year, month, day, hours, minutes, lat, lng]):
             return jsonify({"error": "Missing required fields"}), 400
 
-        # KerykeionChart ile astroloji haritası oluştur
-        person = KerykeionChart(
+        person = KerykeionChartSVG(
             name=city,
             year=year,
             month=month,
@@ -57,10 +53,10 @@ def astrology():
             minute=minutes,
             lat=lat,
             lng=lng,
-            tz="UTC"
+            tz="UTC",
+            geonames_username=None
         )
 
-        # Loglama
         logger.debug(f"Person sun: {person.sun}")
         logger.debug(f"Person moon: {person.moon}")
         logger.debug(f"Person first_house: {person.first_house}")
@@ -72,14 +68,11 @@ def astrology():
         logger.debug(f"Person uranus: {person.uranus}")
         logger.debug(f"Person neptune: {person.neptune}")
         logger.debug(f"Person pluto: {person.pluto}")
-        # Chiron ve diğer noktalar için kontrol ekliyoruz
         logger.debug(f"Person chiron: {getattr(person, 'chiron', 'Not available')}")
         logger.debug(f"Person lilith: {getattr(person, 'mean_lilith', 'Not available')}")
         logger.debug(f"Person north_node: {getattr(person, 'north_node', 'Not available')}")
         logger.debug(f"Person south_node: {getattr(person, 'south_node', 'Not available')}")
-        logger.debug(f"Person houses: {person.first_house}, {person.second_house}, ..., {person.twelfth_house}")
 
-        # Element dağılımı
         element_counts = {'Fire': 0, 'Earth': 0, 'Air': 0, 'Water': 0}
         for planet in [person.sun, person.moon, person.mercury, person.venus, person.mars,
                        person.jupiter, person.saturn, person.uranus, person.neptune, person.pluto]:
@@ -87,7 +80,6 @@ def astrology():
             if element != 'Unknown':
                 element_counts[element] += 1
 
-        # 1 aylık takvim (transitler)
         calendar = []
         today = datetime.now()
         for i in range(30):
@@ -99,7 +91,6 @@ def astrology():
                 "moon_lilith_conjunction": transits["moon_lilith_conjunction"]
             })
 
-        # Chiron, Lilith ve Nodes'ları güvenli şekilde ekle
         planets_response = {
             "sun": {"sign": person.sun['sign'], "house": person.sun['house'], "position": f"{person.sun.get('position', 0)}°"},
             "moon": {"sign": person.moon['sign'], "house": person.moon['house'], "position": f"{person.moon.get('position', 0)}°"},
@@ -112,7 +103,6 @@ def astrology():
             "neptune": {"sign": person.neptune['sign'], "house": person.neptune['house'], "position": f"{person.neptune.get('position', 0)}°"},
             "pluto": {"sign": person.pluto['sign'], "house": person.pluto['house'], "position": f"{person.pluto.get('position', 0)}°"}
         }
-        # Chiron ve diğer noktaları güvenli şekilde ekle
         if hasattr(person, 'chiron'):
             planets_response["chiron"] = {"sign": person.chiron['sign'], "house": person.chiron['house'], "position": f"{person.chiron.get('position', 0)}°"}
         if hasattr(person, 'mean_lilith'):
