@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from kerykeion import KrInstance
+from kerykeion import KerykeionChart
 import logging
 from datetime import datetime, timedelta
 import ephem
@@ -39,28 +39,25 @@ def astrology():
         month = data.get('month')
         day = data.get('day')
         hours = data.get('hour')
-        minuts = data.get('minute')
+        minutes = data.get('minute')
         lat = data.get('lat')
-        lon = data.get('lng')
+        lng = data.get('lng')
         city = data.get('city', 'Unknown')
 
-        if not all([year, month, day, hours, minuts, lat, lon]):
+        if not all([year, month, day, hours, minutes, lat, lng]):
             return jsonify({"error": "Missing required fields"}), 400
 
-        # KrInstance'ı Chiron ve diğer noktalar etkinleştirilmiş şekilde başlat
-        person = KrInstance(
+        # KerykeionChart ile astroloji haritası oluştur
+        person = KerykeionChart(
             name=city,
             year=year,
             month=month,
             day=day,
             hour=hours,
-            minute=minuts,
+            minute=minutes,
             lat=lat,
-            lng=lon,
-            tz_str="UTC",
-            disable_chiron=False,  # Chiron'u etkinleştir
-            disable_lilith=False,  # Lilith'i etkinleştir
-            disable_nodes=False    # Lunar Nodes'u etkinleştir
+            lng=lng,
+            tz="UTC"
         )
 
         # Loglama
@@ -75,10 +72,11 @@ def astrology():
         logger.debug(f"Person uranus: {person.uranus}")
         logger.debug(f"Person neptune: {person.neptune}")
         logger.debug(f"Person pluto: {person.pluto}")
-        logger.debug(f"Person chiron: {person.chiron}")
-        logger.debug(f"Person lilith: {person.lilith}")
-        logger.debug(f"Person north_node: {person.north_node}")
-        logger.debug(f"Person south_node: {person.south_node}")
+        # Chiron ve diğer noktalar için kontrol ekliyoruz
+        logger.debug(f"Person chiron: {getattr(person, 'chiron', 'Not available')}")
+        logger.debug(f"Person lilith: {getattr(person, 'mean_lilith', 'Not available')}")
+        logger.debug(f"Person north_node: {getattr(person, 'north_node', 'Not available')}")
+        logger.debug(f"Person south_node: {getattr(person, 'south_node', 'Not available')}")
         logger.debug(f"Person houses: {person.first_house}, {person.second_house}, ..., {person.twelfth_house}")
 
         # Element dağılımı
@@ -101,26 +99,34 @@ def astrology():
                 "moon_lilith_conjunction": transits["moon_lilith_conjunction"]
             })
 
+        # Chiron, Lilith ve Nodes'ları güvenli şekilde ekle
+        planets_response = {
+            "sun": {"sign": person.sun['sign'], "house": person.sun['house'], "position": f"{person.sun.get('position', 0)}°"},
+            "moon": {"sign": person.moon['sign'], "house": person.moon['house'], "position": f"{person.moon.get('position', 0)}°"},
+            "mercury": {"sign": person.mercury['sign'], "house": person.mercury['house'], "position": f"{person.mercury.get('position', 0)}°"},
+            "venus": {"sign": person.venus['sign'], "house": person.venus['house'], "position": f"{person.venus.get('position', 0)}°"},
+            "mars": {"sign": person.mars['sign'], "house": person.mars['house'], "position": f"{person.mars.get('position', 0)}°"},
+            "jupiter": {"sign": person.jupiter['sign'], "house": person.jupiter['house'], "position": f"{person.jupiter.get('position', 0)}°"},
+            "saturn": {"sign": person.saturn['sign'], "house": person.saturn['house'], "position": f"{person.saturn.get('position', 0)}°"},
+            "uranus": {"sign": person.uranus['sign'], "house": person.uranus['house'], "position": f"{person.uranus.get('position', 0)}°"},
+            "neptune": {"sign": person.neptune['sign'], "house": person.neptune['house'], "position": f"{person.neptune.get('position', 0)}°"},
+            "pluto": {"sign": person.pluto['sign'], "house": person.pluto['house'], "position": f"{person.pluto.get('position', 0)}°"}
+        }
+        # Chiron ve diğer noktaları güvenli şekilde ekle
+        if hasattr(person, 'chiron'):
+            planets_response["chiron"] = {"sign": person.chiron['sign'], "house": person.chiron['house'], "position": f"{person.chiron.get('position', 0)}°"}
+        if hasattr(person, 'mean_lilith'):
+            planets_response["lilith"] = {"sign": person.mean_lilith['sign'], "house": person.mean_lilith['house'], "position": f"{person.mean_lilith.get('position', 0)}°"}
+        if hasattr(person, 'north_node'):
+            planets_response["north_node"] = {"sign": person.north_node['sign'], "house": person.north_node['house'], "position": f"{person.north_node.get('position', 0)}°"}
+        if hasattr(person, 'south_node'):
+            planets_response["south_node"] = {"sign": person.south_node['sign'], "house": person.south_node['house'], "position": f"{person.south_node.get('position', 0)}°"}
+
         response = {
             "sun_sign": f"{person.sun['sign']} {person.sun.get('position', 0)}°",
             "moon_sign": f"{person.moon['sign']} {person.moon.get('position', 0)}°",
             "ascendant": f"{person.first_house['sign']} {person.first_house.get('position', 0)}°",
-            "planets": {
-                "sun": {"sign": person.sun['sign'], "house": person.sun['house'], "position": f"{person.sun.get('position', 0)}°"},
-                "moon": {"sign": person.moon['sign'], "house": person.moon['house'], "position": f"{person.moon.get('position', 0)}°"},
-                "mercury": {"sign": person.mercury['sign'], "house": person.mercury['house'], "position": f"{person.mercury.get('position', 0)}°"},
-                "venus": {"sign": person.venus['sign'], "house": person.venus['house'], "position": f"{person.venus.get('position', 0)}°"},
-                "mars": {"sign": person.mars['sign'], "house": person.mars['house'], "position": f"{person.mars.get('position', 0)}°"},
-                "jupiter": {"sign": person.jupiter['sign'], "house": person.jupiter['house'], "position": f"{person.jupiter.get('position', 0)}°"},
-                "saturn": {"sign": person.saturn['sign'], "house": person.saturn['house'], "position": f"{person.saturn.get('position', 0)}°"},
-                "uranus": {"sign": person.uranus['sign'], "house": person.uranus['house'], "position": f"{person.uranus.get('position', 0)}°"},
-                "neptune": {"sign": person.neptune['sign'], "house": person.neptune['house'], "position": f"{person.neptune.get('position', 0)}°"},
-                "pluto": {"sign": person.pluto['sign'], "house": person.pluto['house'], "position": f"{person.pluto.get('position', 0)}°"},
-                "chiron": {"sign": person.chiron['sign'], "house": person.chiron['house'], "position": f"{person.chiron.get('position', 0)}°"},
-                "lilith": {"sign": person.lilith['sign'], "house": person.lilith['house'], "position": f"{person.lilith.get('position', 0)}°"},
-                "north_node": {"sign": person.north_node['sign'], "house": person.north_node['house'], "position": f"{person.north_node.get('position', 0)}°"},
-                "south_node": {"sign": person.south_node['sign'], "house": person.south_node['house'], "position": f"{person.south_node.get('position', 0)}°"}
-            },
+            "planets": planets_response,
             "houses": {
                 "house_1": f"{person.first_house['sign']} {person.first_house.get('position', 0)}°",
                 "house_2": f"{person.second_house['sign']} {person.second_house.get('position', 0)}°",
