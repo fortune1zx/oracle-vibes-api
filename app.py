@@ -21,8 +21,7 @@ def get_transits(year, month, day):
     observer.date = f"{year}/{month}/{day}"
     moon = ephem.Moon(observer)
     return {
-        "moon_position": f"{ephem.constellation(moon)[1]} {moon.ra:.2f}°",
-        "moon_lilith_conjunction": abs(moon.ra - ephem.Lilith(observer).ra) < 1.0
+        "moon_position": f"{ephem.constellation(moon)[1]} {moon.ra:.2f}°"
     }
 
 @app.route('/astrology', methods=['POST'])
@@ -85,8 +84,7 @@ def astrology():
             transits = get_transits(date.year, date.month, date.day)
             calendar.append({
                 "date": date.strftime("%Y-%m-%d"),
-                "moon_position": transits["moon_position"],
-                "moon_lilith_conjunction": transits["moon_lilith_conjunction"]
+                "moon_position": transits["moon_position"]
             })
 
         planets_response = {
