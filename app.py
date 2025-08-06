@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from kerykeion import KerykeionChartSVG
+from kerykeion import AstrologicalSubject
 import logging
 from datetime import datetime, timedelta
 import ephem
@@ -44,16 +44,15 @@ def astrology():
         if not all([year, month, day, hours, minutes, lat, lng]):
             return jsonify({"error": "Missing required fields"}), 400
 
-        person = KerykeionChartSVG(
+        person = AstrologicalSubject(
             year=year,
             month=month,
             day=day,
             hour=hours,
             minute=minutes,
-            lat=lat,
             lng=lng,
-            tz="UTC",
-            geonames_username=None
+            lat=lat,
+            tz_str="UTC"
         )
 
         logger.debug(f"Person sun: {person.sun}")
