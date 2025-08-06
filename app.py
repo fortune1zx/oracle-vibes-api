@@ -45,7 +45,6 @@ def astrology():
             return jsonify({"error": "Missing required fields"}), 400
 
         person = KerykeionChartSVG(
-            name=city,
             year=year,
             month=month,
             day=day,
