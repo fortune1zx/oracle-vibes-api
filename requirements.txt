@@ -2,3 +2,4 @@ flask==2.3.3
 kerykeion==2.3.12
 gunicorn==22.0.0
 setuptools==70.3.0
+pyephem==4.1.5
