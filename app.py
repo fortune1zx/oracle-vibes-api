@@ -6,7 +6,7 @@ import ephem
 
 app = Flask(__name__)
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 ELEMENTS = {
@@ -23,6 +23,10 @@ def get_transits(year, month, day):
     return {
         "moon_position": f"{ephem.constellation(moon)[1]} {moon.ra:.2f}°"
     }
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Welcome to Oracle Vibes API! Use POST /astrology to get astrological data."}), 200
 
 @app.route('/astrology', methods=['POST'])
 def astrology():
@@ -54,22 +58,8 @@ def astrology():
             tz_str="UTC"
         )
 
-        logger.debug(f"Person sun: {person.sun}")
-        logger.debug(f"Person moon: {person.moon}")
-        logger.debug(f"Person first_house: {person.first_house}")
-        logger.debug(f"Person mercury: {person.mercury}")
-        logger.debug(f"Person venus: {person.venus}")
-        logger.debug(f"Person mars: {person.mars}")
-        logger.debug(f"Person jupiter: {person.jupiter}")
-        logger.debug(f"Person saturn: {person.saturn}")
-        logger.debug(f"Person uranus: {person.uranus}")
-        logger.debug(f"Person neptune: {person.neptune}")
-        logger.debug(f"Person pluto: {person.pluto}")
-        logger.debug(f"Person chiron: {getattr(person, 'chiron', 'Not available')}")
-        logger.debug(f"Person lilith: {getattr(person, 'mean_lilith', 'Not available')}")
-        logger.debug(f"Person north_node: {getattr(person, 'north_node', 'Not available')}")
-        logger.debug(f"Person south_node: {getattr(person, 'south_node', 'Not available')}")
-
+        logger.info(f"Calculating for {year}-{month}-{day} {hours}:{minutes}, lat: {lat}, lng: {lng}")
+        
         element_counts = {'Fire': 0, 'Earth': 0, 'Air': 0, 'Water': 0}
         for planet in [person.sun, person.moon, person.mercury, person.venus, person.mars,
                        person.jupiter, person.saturn, person.uranus, person.neptune, person.pluto]:
