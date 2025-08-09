@@ -45,6 +45,25 @@ def astrology():
             logger.error("No data provided in request")
             return jsonify({"error": "No data provided"}), 400
 
+        # İngilizce ve Türkçe key eşleştirme
+        aliases = {
+            "yıl": "year", "yil": "year", "year": "year",
+            "ay": "month", "month": "month",
+            "gün": "day", "gun": "day", "day": "day",
+            "saat": "hour", "hour": "hour",
+            "dakika": "minute", "minute": "minute",
+            "enlem": "lat", "lat": "lat",
+            "uzunluk": "lng", "longitude": "lng", "lng": "lng",
+            "şehir": "city", "sehir": "city", "city": "city"
+        }
+        normalized = {}
+        for k, v in data.items():
+            if k in aliases:
+                normalized[aliases[k]] = v
+            else:
+                normalized[k] = v
+        data = normalized
+
         year = data.get('year')
         month = data.get('month')
         day = data.get('day')
