@@ -1,12 +1,14 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from kerykeion import AstrologicalSubject
 import logging
 from datetime import datetime, timedelta
 import ephem
 
 app = Flask(__name__)
+CORS(app)  # CORS desteği ekle
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)  # DEBUG seviyesinde loglama
 logger = logging.getLogger(__name__)
 
 ELEMENTS = {
@@ -26,15 +28,23 @@ def get_transits(year, month, day):
 
 @app.route('/')
 def home():
+    logger.debug("Home endpoint called")
     return jsonify({"message": "Welcome to Oracle Vibes API! Use POST /astrology to get astrological data."}), 200
 
 @app.route('/astrology', methods=['POST'])
 def astrology():
     try:
+        logger.debug(f"Request headers: {request.headers}")
+        logger.debug(f"Request body: {request.get_data(as_text=True)}")
+        if not request.is_json:
+            logger.error("Content-Type is not application/json")
+            return jsonify({"error": "Content-Type must be application/json"}), 415
+
         data = request.get_json()
         if not data:
+            logger.error("No data provided in request")
             return jsonify({"error": "No data provided"}), 400
-        
+
         year = data.get('year')
         month = data.get('month')
         day = data.get('day')
@@ -45,8 +55,10 @@ def astrology():
         city = data.get('city', 'Unknown')
 
         if not all([year, month, day, hours, minutes, lat, lng]):
+            logger.error("Missing required fields")
             return jsonify({"error": "Missing required fields"}), 400
 
+        logger.info(f"Calculating for {year}-{month}-{day} {hours}:{minutes}, lat: {lat}, lng: {lng}, city: {city}")
         person = AstrologicalSubject(
             year=year,
             month=month,
@@ -58,8 +70,6 @@ def astrology():
             tz_str="UTC"
         )
 
-        logger.info(f"Calculating for {year}-{month}-{day} {hours}:{minutes}, lat: {lat}, lng: {lng}")
-        
         element_counts = {'Fire': 0, 'Earth': 0, 'Air': 0, 'Water': 0}
         for planet in [person.sun, person.moon, person.mercury, person.venus, person.mars,
                        person.jupiter, person.saturn, person.uranus, person.neptune, person.pluto]:
@@ -78,52 +88,53 @@ def astrology():
             })
 
         planets_response = {
-            "sun": {"sign": person.sun['sign'], "house": person.sun['house'], "position": f"{person.sun.get('position', 0)}°"},
-            "moon": {"sign": person.moon['sign'], "house": person.moon['house'], "position": f"{person.moon.get('position', 0)}°"},
-            "mercury": {"sign": person.mercury['sign'], "house": person.mercury['house'], "position": f"{person.mercury.get('position', 0)}°"},
-            "venus": {"sign": person.venus['sign'], "house": person.venus['house'], "position": f"{person.venus.get('position', 0)}°"},
-            "mars": {"sign": person.mars['sign'], "house": person.mars['house'], "position": f"{person.mars.get('position', 0)}°"},
-            "jupiter": {"sign": person.jupiter['sign'], "house": person.jupiter['house'], "position": f"{person.jupiter.get('position', 0)}°"},
-            "saturn": {"sign": person.saturn['sign'], "house": person.saturn['house'], "position": f"{person.saturn.get('position', 0)}°"},
-            "uranus": {"sign": person.uranus['sign'], "house": person.uranus['house'], "position": f"{person.uranus.get('position', 0)}°"},
-            "neptune": {"sign": person.neptune['sign'], "house": person.neptune['house'], "position": f"{person.neptune.get('position', 0)}°"},
-            "pluto": {"sign": person.pluto['sign'], "house": person.pluto['house'], "position": f"{person.pluto.get('position', 0)}°"}
+            "sun": {"sign": person.sun['sign'], "house": person.sun['house'], "position": f"{person.sun.get('position', 0):.2f}°"},
+            "moon": {"sign": person.moon['sign'], "house": person.moon['house'], "position": f"{person.moon.get('position', 0):.2f}°"},
+            "mercury": {"sign": person.mercury['sign'], "house": person.mercury['house'], "position": f"{person.mercury.get('position', 0):.2f}°"},
+            "venus": {"sign": person.venus['sign'], "house": person.venus['house'], "position": f"{person.venus.get('position', 0):.2f}°"},
+            "mars": {"sign": person.mars['sign'], "house": person.mars['house'], "position": f"{person.mars.get('position', 0):.2f}°"},
+            "jupiter": {"sign": person.jupiter['sign'], "house": person.jupiter['house'], "position": f"{person.jupiter.get('position', 0):.2f}°"},
+            "saturn": {"sign": person.saturn['sign'], "house": person.saturn['house'], "position": f"{person.saturn.get('position', 0):.2f}°"},
+            "uranus": {"sign": person.uranus['sign'], "house": person.uranus['house'], "position": f"{person.uranus.get('position', 0):.2f}°"},
+            "neptune": {"sign": person.neptune['sign'], "house": person.neptune['house'], "position": f"{person.neptune.get('position', 0):.2f}°"},
+            "pluto": {"sign": person.pluto['sign'], "house": person.pluto['house'], "position": f"{person.pluto.get('position', 0):.2f}°"}
         }
         if hasattr(person, 'chiron'):
-            planets_response["chiron"] = {"sign": person.chiron['sign'], "house": person.chiron['house'], "position": f"{person.chiron.get('position', 0)}°"}
+            planets_response["chiron"] = {"sign": person.chiron['sign'], "house": person.chiron['house'], "position": f"{person.chiron.get('position', 0):.2f}°"}
         if hasattr(person, 'mean_lilith'):
-            planets_response["lilith"] = {"sign": person.mean_lilith['sign'], "house": person.mean_lilith['house'], "position": f"{person.mean_lilith.get('position', 0)}°"}
+            planets_response["lilith"] = {"sign": person.mean_lilith['sign'], "house": person.mean_lilith['house'], "position": f"{person.mean_lilith.get('position', 0):.2f}°"}
         if hasattr(person, 'north_node'):
-            planets_response["north_node"] = {"sign": person.north_node['sign'], "house": person.north_node['house'], "position": f"{person.north_node.get('position', 0)}°"}
+            planets_response["north_node"] = {"sign": person.north_node['sign'], "house": person.north_node['house'], "position": f"{person.north_node.get('position', 0):.2f}°"}
         if hasattr(person, 'south_node'):
-            planets_response["south_node"] = {"sign": person.south_node['sign'], "house": person.south_node['house'], "position": f"{person.south_node.get('position', 0)}°"}
+            planets_response["south_node"] = {"sign": person.south_node['sign'], "house": person.south_node['house'], "position": f"{person.south_node.get('position', 0):.2f}°"}
 
         response = {
-            "sun_sign": f"{person.sun['sign']} {person.sun.get('position', 0)}°",
-            "moon_sign": f"{person.moon['sign']} {person.moon.get('position', 0)}°",
-            "ascendant": f"{person.first_house['sign']} {person.first_house.get('position', 0)}°",
+            "sun_sign": f"{person.sun['sign']} {person.sun.get('position', 0):.2f}°",
+            "moon_sign": f"{person.moon['sign']} {person.moon.get('position', 0):.2f}°",
+            "ascendant": f"{person.first_house['sign']} {person.first_house.get('position', 0):.2f}°",
             "planets": planets_response,
             "houses": {
-                "house_1": f"{person.first_house['sign']} {person.first_house.get('position', 0)}°",
-                "house_2": f"{person.second_house['sign']} {person.second_house.get('position', 0)}°",
-                "house_3": f"{person.third_house['sign']} {person.third_house.get('position', 0)}°",
-                "house_4": f"{person.fourth_house['sign']} {person.fourth_house.get('position', 0)}°",
-                "house_5": f"{person.fifth_house['sign']} {person.fifth_house.get('position', 0)}°",
-                "house_6": f"{person.sixth_house['sign']} {person.sixth_house.get('position', 0)}°",
-                "house_7": f"{person.seventh_house['sign']} {person.seventh_house.get('position', 0)}°",
-                "house_8": f"{person.eighth_house['sign']} {person.eighth_house.get('position', 0)}°",
-                "house_9": f"{person.ninth_house['sign']} {person.ninth_house.get('position', 0)}°",
-                "house_10": f"{person.tenth_house['sign']} {person.tenth_house.get('position', 0)}°",
-                "house_11": f"{person.eleventh_house['sign']} {person.eleventh_house.get('position', 0)}°",
-                "house_12": f"{person.twelfth_house['sign']} {person.twelfth_house.get('position', 0)}°"
+                "house_1": f"{person.first_house['sign']} {person.first_house.get('position', 0):.2f}°",
+                "house_2": f"{person.second_house['sign']} {person.second_house.get('position', 0):.2f}°",
+                "house_3": f"{person.third_house['sign']} {person.third_house.get('position', 0):.2f}°",
+                "house_4": f"{person.fourth_house['sign']} {person.fourth_house.get('position', 0):.2f}°",
+                "house_5": f"{person.fifth_house['sign']} {person.fifth_house.get('position', 0):.2f}°",
+                "house_6": f"{person.sixth_house['sign']} {person.sixth_house.get('position', 0):.2f}°",
+                "house_7": f"{person.seventh_house['sign']} {person.seventh_house.get('position', 0):.2f}°",
+                "house_8": f"{person.eighth_house['sign']} {person.eighth_house.get('position', 0):.2f}°",
+                "house_9": f"{person.ninth_house['sign']} {person.ninth_house.get('position', 0):.2f}°",
+                "house_10": f"{person.tenth_house['sign']} {person.tenth_house.get('position', 0):.2f}°",
+                "house_11": f"{person.eleventh_house['sign']} {person.eleventh_house.get('position', 0):.2f}°",
+                "house_12": f"{person.twelfth_house['sign']} {person.twelfth_house.get('position', 0):.2f}°"
             },
             "elements": element_counts,
             "calendar": calendar
         }
+        logger.debug(f"Response: {response}")
         return jsonify(response), 200
 
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
+        logger.error(f"Error in astrology endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
