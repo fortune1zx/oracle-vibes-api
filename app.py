@@ -73,7 +73,8 @@ def astrology():
         lng = data.get('lng')
         city = data.get('city', 'Unknown')
 
-        if not all([year, month, day, hours, minutes, lat, lng]):
+        required_fields = [year, month, day, hours, minutes, lat, lng]
+        if any(field is None for field in required_fields):
             logger.error("Missing required fields")
             return jsonify({"error": "Missing required fields"}), 400
 
